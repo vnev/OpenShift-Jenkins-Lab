@@ -1,8 +1,8 @@
 def appName = "birthday-paradox"
 def replicas = "1"
-def devProject = // TODO: Your dev project name goes here
-def testProject = // TODO: Your test project name goes here
-def prodProject = // TODO: Your prod project name goes here
+def devProject = "vnev-dev"
+def testProject = "vnev-test"
+def prodProject = "vnev-prod"
 
 def skopeoToken
 def imageTag
@@ -45,7 +45,7 @@ pipeline {
         stage("Build & Test") {
             steps {
                 // TODO: Build, Test, and Package birthday-paradox using Maven
-                sh "# TODO: Maven command goes here"
+                sh "mvn clean install"
             }
         }
         stage("Create Image") {
@@ -58,6 +58,8 @@ pipeline {
                             **       There is a similar example for this in the deployApplication() function at the top of this file. Reference that function but write your implementation here.
                             **       Be sure to look at the openshift/build.yaml file to check what parameters the template requires
                             */
+                            def result = openshift.process(readFile(file:"build.yaml"), "-p", "APPLICATION_NAME=${appName}", "-p", "IMAGE_TAG=${imageTag}")
+                            openshift.apply(result)
                         }
                         dir("target") {
                             openshift.selector("bc", appName).startBuild("--from-file=${appName}-${imageTag}.jar").logs("-f")
@@ -73,6 +75,7 @@ pipeline {
                     ** TODO: Use the deployApplication() function, defined above, to deploy birthday-paradox to Dev
                     **       Be sure to use the parameters that have already been defined in the pipeline.
                     */
+                    deployApplication(appName, imageTag, devProject, 1)
                 }
             }
         }
@@ -91,6 +94,7 @@ pipeline {
                     ** TODO: Use the deployApplication() function, defined above, to deploy birthday-paradox to Test
                     **       Be sure to use the parameters that have already been defined in the pipeline.
                     */
+                    deployApplication(appName, imageTag, testProject, 1)
                 }
             }
         }
@@ -114,6 +118,7 @@ pipeline {
                     ** TODO: Use the deployApplication() function, defined above, to deploy birthday-paradox to Prod
                     ** Be sure to use the parameters that have already been defined in the pipeline.
                     */
+                    deployApplication(appName, imageTag, prodProject, 1)
                 }
             }
         }
